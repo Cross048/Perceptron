@@ -1,1 +1,1 @@
-Basic perceptron practice with logic gates
+Implementation of a basic Perceptron for learning basic logic gates.
