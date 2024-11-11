@@ -1,76 +1,76 @@
 import xml.etree.ElementTree as ET
 
-from red_neuronal import RedNeuronal
+from neural_network import NeuralNetwork
 
 
-def seleccionar_puerta():
-    print("Seleccione la operación lógica a entrenar:")
+def select_gate():
+    print("Select the logical operation to train:")
     print("1. AND")
     print("2. OR")
     print("3. NAND")
     print("4. NOR")
-    opcion = int(input("Ingrese el número de la opción: "))
-    return opcion
+    option = int(input("Enter the option number: "))
+    return option
 
-def configurar_entradas(opcion):
-    if opcion == 1:
+def configure_inputs(option):
+    if option == 1:
         return [(0, 0), (0, 1), (1, 0), (1, 1)], [0, 0, 0, 1], "AND"
-    elif opcion == 2:
+    elif option == 2:
         return [(0, 0), (0, 1), (1, 0), (1, 1)], [0, 1, 1, 1], "OR"
-    elif opcion == 3:
+    elif option == 3:
         return [(0, 0), (0, 1), (1, 0), (1, 1)], [1, 1, 1, 0], "NAND"
-    elif opcion == 4:
+    elif option == 4:
         return [(0, 0), (0, 1), (1, 0), (1, 1)], [1, 0, 0, 0], "NOR"
     else:
-        print("Opción no válida.")
+        print("Invalid option.")
         return None, None, None
 
-def guardar_pesos_en_xml(red, archivo_xml):
-    root = ET.Element("red_neuronal")
-    for idx, capa in enumerate(red.capas):
-        capa_element = ET.SubElement(root, f"capa_{idx}")
-        for j, neurona in enumerate(capa):
-            neurona_element = ET.SubElement(capa_element, f"neurona_{j}")
-            ET.SubElement(neurona_element, "pesos").text = ",".join(map(str, neurona.pesos))
-            ET.SubElement(neurona_element, "sesgo").text = str(neurona.sesgo)
+def save_weights_to_xml(network, xml_file):
+    root = ET.Element("neural_network")
+    for idx, layer in enumerate(network.layers):
+        layer_element = ET.SubElement(root, f"layer_{idx}")
+        for j, neuron in enumerate(layer):
+            neuron_element = ET.SubElement(layer_element, f"neuron_{j}")
+            ET.SubElement(neuron_element, "weights").text = ",".join(map(str, neuron.weights))
+            ET.SubElement(neuron_element, "bias").text = str(neuron.bias)
     tree = ET.ElementTree(root)
-    tree.write(archivo_xml)
-    print(f"\nPesos y sesgo guardados en {archivo_xml}")
+    tree.write(xml_file)
+    print(f"\nWeights and bias saved to {xml_file}")
 
 
 def main():
-    opcion = seleccionar_puerta()
-    entradas, resultados_esperados, nombre_puerta = configurar_entradas(opcion)
-    if not entradas:
+    option = select_gate()
+    inputs, expected_results, gate_name = configure_inputs(option)
+    if not inputs:
         return
 
-    # Cambiar la entrada para añadir la última capa de salida
-    neuronas_por_capa_oculta = input("Ingrese el número de neuronas por capa oculta (separadas por coma): ")
+    # Change the input to add the last output layer
+    neurons_per_hidden_layer = input("Enter the number of neurons per hidden layer (separated by commas): ")
 
-    # Procesamos la entrada y aseguramos que la última capa sea siempre 1
-    estructura = [2]  # La capa de entrada con 2 neuronas
-    if neuronas_por_capa_oculta:
-        capas_ocultas = [int(n) for n in neuronas_por_capa_oculta.split(",")]
-        estructura.extend(capas_ocultas)
-    estructura.append(1)  # La capa de salida siempre con 1 neurona
+    # Process the input and ensure the last layer is always 1
+    structure = [2]  # Input layer with 2 neurons
+    if neurons_per_hidden_layer:
+        hidden_layers = [int(n) for n in neurons_per_hidden_layer.split(",")]
+        structure.extend(hidden_layers)
+    structure.append(1)  # Output layer always with 1 neuron
 
-    red = RedNeuronal(estructura)
+    network = NeuralNetwork(structure)
 
-    tasa_aprendizaje = 0.1
-    ciclos = 10000
+    learning_rate = 0.1
+    cycles = 50000
 
-    # Entrenar la red
-    red.entrenar(entradas, resultados_esperados, tasa_aprendizaje, ciclos)
+    # Train the network
+    network.train(inputs, expected_results, learning_rate, cycles)
 
-    # Guardar los pesos en un archivo XML
-    archivo_xml = f"pesos_{nombre_puerta}.xml"
-    guardar_pesos_en_xml(red, archivo_xml)
+    # Save the weights to an XML file
+    xml_file = f"weights_{gate_name}.xml"
+    save_weights_to_xml(network, xml_file)
 
-    # Probar la red
-    print(f"\nPrueba de la red entrenada para {nombre_puerta}:")
-    for entrada in entradas:
-        resultado = red.pasada_adelante(entrada)
-        print(f"Entrada: {entrada}, Salida: {resultado[0]:.5f}")
+    # Test the trained network
+    print(f"\nTest of the trained network for {gate_name}:")
+    for input_data in inputs:
+        result = network.forward_pass(input_data)
+        print(f"Input: {input_data}, Output: {result[0]:.5f}")
 
 
 if __name__ == "__main__":
